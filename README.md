@@ -8,7 +8,7 @@ This project simulates and injects transient astronomical sources into high-time
 #### 2. Injection into MeerKAT Data:
     These simulated transients are injected into actual MeerKAT observational data, represented in high-time-cadence Zarr cubes. This allows for the testing of detection and analysis techniques within realistic conditions.
 
-#### 3.Consideration of Dirty PSF:
+#### 3. Consideration of Dirty PSF:
     The dirty PSF (Point Spread Function), which represents the telescope array's response at a given time, is applied for each time step. This ensures the injected sources are impacted by the same observational effects as the real data.
 
 #### Goal:
