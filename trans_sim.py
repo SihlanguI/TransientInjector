@@ -123,7 +123,7 @@ def create_transient_source(header, x_size, y_size, sigma_major, sigma_minor, po
     sigma_major_pix = sigma_major / header['CDELT2']
     
     # Define elliptical Gaussian function
-    gaussian = trans.elliptical_gaussian(amplitude, X_rot, Y_rot, sigma_major_pix, sigma_minor_pix)
+    gaussian = trans.point_source(amplitude, X_rot, Y_rot, sigma_major_pix, sigma_minor_pix)
     #gaussian = amplitude * np.exp(-0.5 * ((X_rot / sigma_major_pix)**2 + (Y_rot / sigma_minor_pix)**2))
     
     return gaussian

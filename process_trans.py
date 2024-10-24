@@ -25,16 +25,16 @@ def main(config):
     stokes_par = config['stokes_par']
     start_index = config['start_index']
     dur = config['duration']
-    inte = config['integration']
+    int_time= config['integration']
     positions = config['positions']
     amplitude = config['amplitude']
 
     ds, cube, mjr_axis, mnr_axis, pa, header = get_cube(zarr_path, stokes_par, varname=varname)
     print(f"Loaded data cube with shape: {cube.shape}")
-    no_timestamps = dur//2
-    t_index = [start_index+i for i in range(no_timestamps)]
+    no_timestamps = dur//int_time
+    t_indices = [start_index+i for i in range(no_timestamps)]
     # Step 2: Insert the transient source at multiple time indices and positions
-    for t_index, (pos_x, pos_y) in zip(t_indices, positions):
+    for t_index, amp, (pos_x, pos_y) in zip(t_indices, amplitude, positions):
         # Get the corresponding major axis, minor axis, and position angle for the current time index
         sigma_major = mjr_axis[t_index]
         sigma_minor = mnr_axis[t_index]
@@ -48,13 +48,12 @@ def main(config):
             sigma_major=sigma_major,
             sigma_minor=sigma_minor,
             position_angle_deg=position_angle_deg,
-            amplitude=amplitude
+            amplitude=amp
         )
-        print(f"Created transient source at time index {t_index} with major axis: {sigma_major}, minor axis: {sigma_minor}, PA: {position_angle_deg}")
-
+  
         # Insert the transient source into the cube
         insert_transient_into_zarr(cube, t_index=t_index, transient=transient_source, pos_x=pos_x, pos_y=pos_y)
-        print(f"Inserted transient into the cube at time index {t_index}, position ({pos_x}, {pos_y})")
+        print(f"Inserted transient into the cube at time index {t_index}, position ({pos_x}, {pos_y}), and amplitude {amp}")
 
     # Step 3: Save the modified cube back to the same Zarr file
     update_zarr(zarr_path, ds, cube, varname, stokes_par)
