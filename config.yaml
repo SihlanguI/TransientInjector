@@ -1,0 +1,12 @@
+zarr_path: "/home/isihlangu/transient_sim/cube-1.zarr/"
+varname: "cube"
+stokes_par: "I"
+start_index: 1500
+duration: 8
+integration: 2
+positions: 
+       - [2500, 2500]
+       - [2500, 2500]
+       - [2500, 2500]
+       - [2500, 2500]
+amplitude: 1.0
