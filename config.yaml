@@ -1,4 +1,5 @@
 zarr_path: "/home/isihlangu/transient_sim/cube-1.zarr/"
+source_type: "burst"
 varname: "cube"
 stokes_par: "I"
 start_index: 1500

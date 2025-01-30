@@ -80,7 +80,7 @@ def get_cube(path: str, stokes_par: str, varname: Optional[str] = None,
     return ds, data, mjr_axis, mnr_axis, pa, header
 
 
-def create_transient_source(header, x_size, y_size, sigma_major, sigma_minor, position_angle_deg, amplitude):
+def create_transient_source(header, x_size, y_size, sigma_major, sigma_minor, position_angle_deg, amplitude, source_type):
     """
     Create a 2D elliptical Gaussian transient source with specified parameters.
 
@@ -122,10 +122,11 @@ def create_transient_source(header, x_size, y_size, sigma_major, sigma_minor, po
     sigma_minor_pix = sigma_minor / header['CDELT2']
     sigma_major_pix = sigma_major / header['CDELT2']
     
-    # Define elliptical Gaussian function
-    gaussian = trans.point_source(amplitude, X_rot, Y_rot, sigma_major_pix, sigma_minor_pix)
-    #gaussian = amplitude * np.exp(-0.5 * ((X_rot / sigma_major_pix)**2 + (Y_rot / sigma_minor_pix)**2))
-    
+    # Call the type of a transient
+    instance=trans.TransientSources()
+    method_name = source_type
+    method = getattr(instance, method_name, None)
+    gaussian = method(amplitude, X_rot, Y_rot, sigma_major_pix, sigma_minor_pix)
     return gaussian
 
 

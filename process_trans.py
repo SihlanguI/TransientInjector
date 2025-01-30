@@ -21,6 +21,7 @@ def main(config):
 
     # Step 1: Load the cube and its associated parameters from the Zarr file
     zarr_path = config['zarr_path']
+    source = config['source_type']
     varname = config['varname']
     stokes_par = config['stokes_par']
     start_index = config['start_index']
@@ -30,7 +31,6 @@ def main(config):
     amplitude = config['amplitude']
 
     ds, cube, mjr_axis, mnr_axis, pa, header = get_cube(zarr_path, stokes_par, varname=varname)
-    print(f"Loaded data cube with shape: {cube.shape}")
     no_timestamps = dur//int_time
     t_indices = [start_index+i for i in range(no_timestamps)]
     # Step 2: Insert the transient source at multiple time indices and positions
@@ -48,22 +48,22 @@ def main(config):
             sigma_major=sigma_major,
             sigma_minor=sigma_minor,
             position_angle_deg=position_angle_deg,
-            amplitude=amp
+            amplitude=amp,
+            source_type=source
         )
-  
         # Insert the transient source into the cube
         insert_transient_into_zarr(cube, t_index=t_index, transient=transient_source, pos_x=pos_x, pos_y=pos_y)
-        print(f"Inserted transient into the cube at time index {t_index}, position ({pos_x}, {pos_y}), and amplitude {amp}")
+        print("Inserted transient into the cube at time index {}, position {}, and amplitude {}".format(t_index, position (pos_x, pos_y), amp))
 
     # Step 3: Save the modified cube back to the same Zarr file
     update_zarr(zarr_path, ds, cube, varname, stokes_par)
-    print(f"Saved the modified cube to {zarr_path}")
+    print("Saved the modified cube to {}".format(zarr_path))
 
 
 if __name__ == "__main__":
     # Load the YAML configuration file
     if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} <config_file>")
+        print("Usage: {} {}".format(sys.argv[0], "<config_file>"))
         sys.exit(1)
 
     config_file = sys.argv[1]
