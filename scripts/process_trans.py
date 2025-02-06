@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 
 import numpy as np
+import os
 import sys
-import yaml
-from trans_sim import get_cube, create_transient_source, insert_transient_into_zarr, update_zarr
+import os
+
+from transsim.transsim import trans_sim as get_cube, create_transient_source, insert_transient_into_zarr, update_zarr
 
 def main(config):
     """
