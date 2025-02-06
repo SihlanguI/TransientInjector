@@ -5,7 +5,7 @@ import os
 import sys
 import os
 
-from transsim.transsim import trans_sim as get_cube, create_transient_source, insert_transient_into_zarr, update_zarr
+import trans_sim as get_cube, create_transient_source, insert_transient_into_zarr, update_zarr
 
 def main(config):
     """
