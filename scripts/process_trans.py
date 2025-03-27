@@ -1,11 +1,25 @@
 #!/usr/bin/env python
-
-import numpy as np
+import argparse
+import logging
 import os
 import sys
-import os
+import yaml
+from typing import List
 
-import trans_sim as get_cube, create_transient_source, insert_transient_into_zarr, update_zarr
+import numpy as np
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from transsim.trans_sim import get_cube, create_transient_source, insert_transient_into_zarr, update_zarr
+
+
+def create_parser():
+    parser = argparse.ArgumentParser(description='MeerKAT Transient Simulation.')
+    print('MEERKAT Transient Simulation')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('config', type=str, help='config file')
+    
+    return parser
 
 def main(config):
     """
@@ -23,15 +37,18 @@ def main(config):
 
     # Step 1: Load the cube and its associated parameters from the Zarr file
     zarr_path = config['zarr_path']
+    out_zarr = config['out_zarr']
     source = config['source_type']
     varname = config['varname']
     stokes_par = config['stokes_par']
     start_index = config['start_index']
     dur = config['duration']
     int_time= config['integration']
-    positions = config['positions']
-    amplitude = config['amplitude']
+    positions = [config['positions']]
+    amplitude = [config['amplitude']]
+    
 
+    print("Reading in the zarr cube")
     ds, cube, mjr_axis, mnr_axis, pa, header = get_cube(zarr_path, stokes_par, varname=varname)
     no_timestamps = dur//int_time
     t_indices = [start_index+i for i in range(no_timestamps)]
@@ -43,6 +60,7 @@ def main(config):
         position_angle_deg = pa[t_index]
 
         # Create a transient source for the current time index
+        print("Inserting a transient into the cube at time index {}, position {}, and amplitude {}".format(t_index, (pos_x, pos_y), amp))
         transient_source = create_transient_source(
             header=header,
             x_size=cube.shape[1],
@@ -55,20 +73,21 @@ def main(config):
         )
         # Insert the transient source into the cube
         insert_transient_into_zarr(cube, t_index=t_index, transient=transient_source, pos_x=pos_x, pos_y=pos_y)
-        print("Inserted transient into the cube at time index {}, position {}, and amplitude {}".format(t_index, position (pos_x, pos_y), amp))
+        print("Completed the insertion of the transient source")
 
     # Step 3: Save the modified cube back to the same Zarr file
-    update_zarr(zarr_path, ds, cube, varname, stokes_par)
-    print("Saved the modified cube to {}".format(zarr_path))
+    path, filename = os.path.split(zarr_path)
+    out_path = os.path.join(out_zarr, filename)
+    print("Saving the modified cube to {}".format(out_path))
+    update_zarr(out_path, ds, cube, varname, stokes_par)
+    print("Cube is saved")
 
 
 if __name__ == "__main__":
     # Load the YAML configuration file
-    if len(sys.argv) != 2:
-        print("Usage: {} {}".format(sys.argv[0], "<config_file>"))
-        sys.exit(1)
-
-    config_file = sys.argv[1]
+    parser = create_parser()
+    args = parser.parse_args()
+    config_file = args.config
 
     with open(config_file, 'r') as file:
         config = yaml.safe_load(file)
