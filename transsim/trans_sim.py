@@ -3,7 +3,7 @@ import xarray as xr
 from astropy.io import fits
 from typing import Optional, Tuple
 
-import transient_util as trans
+import transsim.transient_util as trans
 
 # Dictionary mapping Stokes parameter names to indices
 stokes_mapping = {

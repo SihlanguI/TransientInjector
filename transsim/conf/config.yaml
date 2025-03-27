@@ -1,0 +1,11 @@
+zarr_path: "/net/baker/home/oms/projects/ConjBoom/parrot-stew-recipes/obs-l2-qc2/im4htc-cad1/cubes/cube-1.zarr"
+out_zarr: "/data/isihlangu/"
+source_type: "point_source"
+varname: "cube"
+stokes_par: "I"
+start_index: 1500
+duration: 2
+integration: 2
+positions: [2500, 2500]
+amplitude: [1.0]
+
