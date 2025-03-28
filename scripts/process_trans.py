@@ -44,8 +44,12 @@ def main(config):
     start_index = config['start_index']
     dur = config['duration']
     int_time= config['integration']
-    positions = [config['positions']]
-    amplitude = [config['amplitude']]
+    positions = config['positions']
+    amplitude = config['amplitude']
+
+    if not any(isinstance(i, list) for i in positions):
+            positions = [positions]
+            amplitude = [amplitude]
     
 
     print("Reading in the zarr cube")
