@@ -3,7 +3,17 @@ import numpy as np
 
 class TransientSources:
     
-    def point_source(self, amplitude, X_rot, Y_rot, sigma_major_pix, sigma_minor_pix):
-        gaussian = amplitude * np.exp(-0.5 * ((X_rot / sigma_major_pix)**2 + (Y_rot / sigma_minor_pix)**2))
-        return gaussian
-
+    def point_source(self, amplitude, x_size, y_size):
+        """
+        Create a delta function
+        
+        x_size : int
+            The width of the 2D grid in pixels.
+        y_size : int
+            The height of the 2D grid in pixels.
+        """
+        # Define image size
+        point_source = np.zeros((x_size, y_size))
+        point_source[x_size//2, y_size//2] = amplitude  # Delta function at the center
+        return point_source
+    

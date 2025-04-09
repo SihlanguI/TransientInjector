@@ -10,7 +10,7 @@ import numpy as np
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from transsim.trans_sim import get_cube, create_transient_source, insert_transient_into_zarr, update_zarr
+from transsim.trans_sim import get_cube, conv_source, insert_transient_into_zarr, update_zarr
 
 
 def create_parser():
@@ -35,9 +35,10 @@ def main(config):
     None
     """
 
-    # Step 1: Load the cube and its associated parameters from the Zarr file
-    zarr_path = config['zarr_path']
+    # Step 1: Get parmeters from the config file
+    in_zarr = config['in_zarr']
     out_zarr = config['out_zarr']
+    overwrite_cube = config['overwrite_cube']
     source = config['source_type']
     varname = config['varname']
     stokes_par = config['stokes_par']
@@ -49,11 +50,9 @@ def main(config):
 
     if not any(isinstance(i, list) for i in positions):
             positions = [positions]
-            amplitude = [amplitude]
     
-
     print("Reading in the zarr cube")
-    ds, cube, mjr_axis, mnr_axis, pa, header = get_cube(zarr_path, stokes_par, varname=varname)
+    ds, cube, mjr_axis, mnr_axis, pa, header = get_cube(in_zarr, stokes_par, varname=varname)
     no_timestamps = dur//int_time
     t_indices = [start_index+i for i in range(no_timestamps)]
     # Step 2: Insert the transient source at multiple time indices and positions
@@ -65,7 +64,7 @@ def main(config):
 
         # Create a transient source for the current time index
         print("Inserting a transient into the cube at time index {}, position {}, and amplitude {}".format(t_index, (pos_x, pos_y), amp))
-        transient_source = create_transient_source(
+        convolved_source = conv_source(
             header=header,
             x_size=cube.shape[1],
             y_size=cube.shape[2],
@@ -76,14 +75,17 @@ def main(config):
             source_type=source
         )
         # Insert the transient source into the cube
-        insert_transient_into_zarr(cube, t_index=t_index, transient=transient_source, pos_x=pos_x, pos_y=pos_y)
+        insert_transient_into_zarr(cube, t_index=t_index, transient=convolved_source, pos_x=pos_x, pos_y=pos_y)
         print("Completed the insertion of the transient source")
 
-    # Step 3: Save the modified cube back to the same Zarr file
-    path, filename = os.path.split(zarr_path)
-    out_path = os.path.join(out_zarr, filename)
-    print("Saving the modified cube to {}".format(out_path))
-    update_zarr(out_path, ds, cube, varname, stokes_par)
+    # Step 3: Save the modified cube to disk
+    if overwrite_cube:
+        out_zarr = in_zarr
+    else:
+        path, filename = os.path.split(in_zarr)
+        out_zarr = os.path.join(out_zarr, filename)
+    print("Saving the modified cube to {}".format(out_zarr))
+    update_zarr(out_zarr, ds, cube, varname, stokes_par, overwrite_cube)
     print("Cube is saved")
 
 

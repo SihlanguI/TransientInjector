@@ -1,5 +1,6 @@
-zarr_path: "/net/baker/home/oms/projects/ConjBoom/parrot-stew-recipes/obs-l2-qc2/im4htc-cad1/cubes/cube-1.zarr"
-out_zarr: "/data/isihlangu/"
+in_zarr: "/net/janis/home/oms/projects/fatalii/obs-omcen/cubes/cube-1.zarr"
+out_zarr: "/net/sinatra/vault2/isihlangu/transient/test_data"
+overwrite_cube: False
 source_type: "point_source"
 varname: "cube"
 stokes_par: "I"

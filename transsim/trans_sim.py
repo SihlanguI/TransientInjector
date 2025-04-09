@@ -2,6 +2,7 @@ import numpy as np
 import xarray as xr
 from astropy.io import fits
 from typing import Optional, Tuple
+from scipy.signal import fftconvolve
 
 import transsim.transient_util as trans
 
@@ -80,9 +81,9 @@ def get_cube(path: str, stokes_par: str, varname: Optional[str] = None,
     return ds, data, mjr_axis, mnr_axis, pa, header
 
 
-def create_transient_source(header, x_size, y_size, sigma_major, sigma_minor, position_angle_deg, amplitude, source_type):
+def gaussian_beam(header, x_size, y_size, sigma_major, sigma_minor, position_angle_deg, source_type):
     """
-    Create a 2D elliptical Gaussian transient source with specified parameters.
+    Create a 2D elliptical Gaussian beam.
 
     Parameters:
     -----------
@@ -98,8 +99,6 @@ def create_transient_source(header, x_size, y_size, sigma_major, sigma_minor, po
         Minor axis standard deviation of the Gaussian in degrees.
     position_angle_deg : float
         Position angle of the Gaussian's major axis in degrees.
-    amplitude : float
-        Peak amplitude of the Gaussian.
 
     Returns:
     --------
@@ -121,13 +120,20 @@ def create_transient_source(header, x_size, y_size, sigma_major, sigma_minor, po
     # Convert sigma values from degrees to pixels using pixel scale from header
     sigma_minor_pix = sigma_minor / header['CDELT2']
     sigma_major_pix = sigma_major / header['CDELT2']
-    
+        
+    # create beam
+    beam =  np.exp(-0.5 * ((X_rot / sigma_major_pix)**2 + (Y_rot / sigma_minor_pix)**2))
+    return beam
+
+def conv_source(header, x_size, y_size, sigma_major, sigma_minor, position_angle_deg, amplitude, source_type):
+    beam = gaussian_beam(header, x_size, y_size, sigma_major, sigma_minor, position_angle_deg, source_type)
     # Call the type of a transient
     instance=trans.TransientSources()
     method_name = source_type
     method = getattr(instance, method_name, None)
-    gaussian = method(amplitude, X_rot, Y_rot, sigma_major_pix, sigma_minor_pix)
-    return gaussian
+    p_source = method(amplitude, x_size, y_size)
+    convolved_source = fftconvolve(p_source, beam, mode='same')
+    return convolved_source
 
 
 def insert_transient_into_zarr(cube, t_index, transient, pos_x, pos_y):
@@ -172,7 +178,7 @@ def insert_transient_into_zarr(cube, t_index, transient, pos_x, pos_y):
                                                        transient_x_start:transient_x_start + (x_end - x_start)]
 
 
-def update_zarr(zarr_path, ds, cube, varname, stokes_par):
+def update_zarr(out_zarr, ds, cube, varname, stokes_par, overwrite_cube):
     """
     Update the Zarr file with the modified cube data.
 
@@ -198,5 +204,7 @@ def update_zarr(zarr_path, ds, cube, varname, stokes_par):
     ds[varname][stokes_index, :, :, :] = cube
     
     # Save the updated data back to the Zarr file
-    ds.to_zarr(zarr_path, mode='w')
-
+    if overwrite_cube:
+        ds.to_zarr(out_zarr, mode='r+')
+    else:
+        ds.to_zarr(out_zarr, mode='w')
