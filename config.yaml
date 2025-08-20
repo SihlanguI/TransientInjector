@@ -1,12 +1,10 @@
 in_zarr: "/net/janis/home/oms/projects/fatalii/obs-omcen/cubes/cube-1.zarr"
 out_zarr: "/net/sinatra/vault2/isihlangu/transient/test_data"
 overwrite_cube: False
-source_type: "point_source"
 varname: "cube"
 stokes_par: "I"
 start_index: 1500
 duration: 2
 integration: 2
 positions: [2500, 2500]
-amplitude: [1.0]
-
+amplitude: [0.004]

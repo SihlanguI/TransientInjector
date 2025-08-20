@@ -4,7 +4,6 @@ from astropy.io import fits
 from typing import Optional, Tuple
 from scipy.signal import fftconvolve
 
-import transsim.transient_util as trans
 
 # Dictionary mapping Stokes parameter names to indices
 stokes_mapping = {
@@ -81,14 +80,14 @@ def get_cube(path: str, stokes_par: str, varname: Optional[str] = None,
     return ds, data, mjr_axis, mnr_axis, pa, header
 
 
-def gaussian_beam(header, x_size, y_size, sigma_major, sigma_minor, position_angle_deg, source_type):
+def gaussian_beam(header, x_size, y_size, fwhm_x, fwhm_y , position_angle_deg, peak_flux):
     """
-    Create a 2D elliptical Gaussian beam.
-
+    Create a 2D elliptical Gaussian beam aligned with FITS convention.
+    
     Parameters:
     -----------
     header : dict
-        FITS header containing pixel scale ('CDELT2') for converting sigma from degrees to pixels.
+        FITS header containing pixel scale ('CDELT1/2') for converting sigma from degrees to pixels.
     x_size : int
         The width of the 2D grid in pixels.
     y_size : int
@@ -99,41 +98,37 @@ def gaussian_beam(header, x_size, y_size, sigma_major, sigma_minor, position_ang
         Minor axis standard deviation of the Gaussian in degrees.
     position_angle_deg : float
         Position angle of the Gaussian's major axis in degrees.
+    peak flux : float
+        peak flux
 
     Returns:
     --------
-    gaussian : numpy.ndarray
+    image : numpy.ndarray
         A 2D array representing the transient source.
     """
-    # Create a grid of coordinates
-    x = np.linspace(-x_size//2, x_size//2, x_size)
-    y = np.linspace(-y_size//2, y_size//2, y_size)
+    x = np.linspace(-x_size // 2, x_size // 2, x_size)
+    y = np.linspace(-y_size // 2, y_size // 2, y_size)
     X, Y = np.meshgrid(x, y)
-    
-    # Convert position angle to radians
-    position_angle_rad = np.radians(position_angle_deg)
-    
+
+    # Convert position angle: FITS PA from north to east -> rotation from x-axis
+    position_angle_rad = np.radians(90 - position_angle_deg)
+
     # Rotate coordinates by position angle
-    X_rot = X * np.cos(position_angle_rad) + Y * np.sin(position_angle_rad)
-    Y_rot = -X * np.sin(position_angle_rad) + Y * np.cos(position_angle_rad)
+    X_rot = X * np.cos(position_angle_rad) - Y * np.sin(position_angle_rad)
+    Y_rot = X * np.sin(position_angle_rad) + Y * np.cos(position_angle_rad)
 
-    # Convert sigma values from degrees to pixels using pixel scale from header
-    sigma_minor_pix = sigma_minor / header['CDELT2']
-    sigma_major_pix = sigma_major / header['CDELT2']
-        
-    # create beam
-    beam =  np.exp(-0.5 * ((X_rot / sigma_major_pix)**2 + (Y_rot / sigma_minor_pix)**2))
-    return beam
+    # Convert sigma from degrees to pixels
+    hwhm = 2 * np.sqrt(2 * np.log(2)) # Half-Width at half max
+    sigma_major = fwhm_x / hwhm
+    sigma_minor = fwhm_y / hwhm
+    sigma_x_pix = sigma_major / header['CDELT1']  # x-direction
+    sigma_y_pix = sigma_minor / header['CDELT2']  # y-direction
 
-def conv_source(header, x_size, y_size, sigma_major, sigma_minor, position_angle_deg, amplitude, source_type):
-    beam = gaussian_beam(header, x_size, y_size, sigma_major, sigma_minor, position_angle_deg, source_type)
-    # Call the type of a transient
-    instance=trans.TransientSources()
-    method_name = source_type
-    method = getattr(instance, method_name, None)
-    p_source = method(amplitude, x_size, y_size)
-    convolved_source = fftconvolve(p_source, beam, mode='same')
-    return convolved_source
+    # 2D Gaussian
+    beam = np.exp(-0.5 * ((X_rot / sigma_x_pix) ** 2 + (Y_rot / sigma_y_pix) ** 2))
+    image = peak_flux * beam
+
+    return image
 
 
 def insert_transient_into_zarr(cube, t_index, transient, pos_x, pos_y):

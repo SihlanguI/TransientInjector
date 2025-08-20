@@ -1,0 +1,32 @@
+[project]
+name = "transsim"
+version = "0.1.0"
+description = "Transient Simulation for MeerKAT data in the image domain"
+authors = [{name="Isaac Sihlangu", email="isihlangu@sarao.ac.za"}]
+readme = "README.md"
+requires-python = ">=3.8"
+license = {file = "LICENSE"}
+classifiers = [
+    'Development Status :: 1 - Planning',
+    'Intended Audience :: Science/Research',
+    'Operating System :: POSIX :: Linux',
+    'Programming Language :: Python :: 3.10',]
+dependencies = [
+    "astropy",
+    "dask",
+    "xarray",
+    "numpy",
+    "pandas",
+    "zarr",
+    "scipy",
+]
+
+[project.scripts]
+katrfireport = "transsim.process_trans:entry_point"
+
+[project.urls]
+Homepage="https://github.com/SihlanguI/TransientInjector"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
